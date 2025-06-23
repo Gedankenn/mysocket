@@ -1,2 +1,14 @@
-# mysocket
-own socket wrapper for study and development
+# Under development
++----------------------------------+
+|  ⚠️   UNDER DEVELOPMENT   ⚠️     |
+|                                  |
+|        [ WORK IN PROGRESS ]      |
+|                                  |
+|     Please check back later!     |
++----------------------------------+
+         \   ^__^
+          \  (oo)\_______
+             (__)\       )\/\
+                 ||----w |
+                 ||     ||
+
