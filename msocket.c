@@ -1,25 +1,36 @@
 #include "msocket.h"
+#include <sys/socket.h>
 
-#define BUF_SIZE 500
+
+int BUF_SIZE = 0;
+int FAMILY = AF_UNSPEC;
+int PROTOCOL = 0;
+
+void init_socket(int buf, int type, int proto)
+{
+    BUF_SIZE = buf;
+    FAMILY = type;
+    PROTOCOL = proto;
+    if((proto == IPV4 && type == AF_INET6) || (proto == IPV6 && type == AF_INET))
+    {
+        #warning "Incompatible protocol and family";
+    }
+}
 
 int create_socket(char* port)
 {
     int                 sfd, s;
-    char                buf[BUF_SIZE];
-    size_t              size;
-    ssize_t             nread;
     struct addrinfo     hints;
     struct addrinfo     *result, *rp;
     struct sockaddr_storage peer_addr;
     socklen_t peer_addrlen = sizeof(peer_addr);
-    (void)size;
 
 
     memset(&hints, 0, sizeof(hints));
-    hints.ai_family =       AF_UNSPEC;  /* Allow IPv4 or IPv6 */
+    hints.ai_family =       FAMILY;  /* Allow IPv4 or IPv6 */
     hints.ai_socktype =     SOCK_DGRAM; /* Datagram socket */
     hints.ai_flags =        AI_PASSIVE; /* For wildcard IP address */
-    hints.ai_protocol =     0;          /* Any protocol */
+    hints.ai_protocol =     PROTOCOL;          /* Any protocol */
     hints.ai_canonname =    NULL;
     hints.ai_addr =         NULL;
     hints.ai_next =         NULL;
@@ -43,13 +54,42 @@ int create_socket(char* port)
             continue;
         }
 
-        if (bind(sfd, rp->ai_addr, rp->ai_addrlen) == 0)
+        if(connect(sfd, rp->ai_addr, rp->ai_addrlen) != -1)
         {
-            break; // Success 
+            break; //Success
         }
         close(sfd);
     }
 
 
     freeaddrinfo(result);
+
+    if (rp == NULL)
+    {
+        fprintf(stderr, "Could not connect\n");
+        exit(1);
+    }
+    return sfd;
+}
+
+void socket_write(int sfd, int* data, int size)
+{
+    if(write(sfd, data, size) != size)
+    {
+        fprintf(stderr, "failed to write data\n");
+    }
+}
+
+int socket_read(int sfd, int* data)
+{
+    char buf[BUF_SIZE];
+    int nread = 0;
+    nread = read(sfd, buf, BUF_SIZE);
+    if (nread == -1)
+    {
+        fprintf(stderr, "what is the fuck\n");
+        return -1;
+    }
+    memcpy(data, buf, nread);
+    return nread;
 }
