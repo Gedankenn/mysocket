@@ -50,6 +50,6 @@ int socket_read(int sfd, int* data);
 * @Params host The host address 
 * @Params port The port to bind to
 */ 
-int bind_socket(char* host, char* port);
+int connect_socket(char* host, char* port);
 
 #endif //__msocket_h_

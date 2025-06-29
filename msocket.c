@@ -71,7 +71,7 @@ int create_socket(char* port)
     return sfd;
 }
 
-int bind_socket(char* host, char* port)
+int connect_socket(char* host, char* port)
 {
     int                 sfd, s;
     struct addrinfo     hints;
@@ -109,8 +109,7 @@ int bind_socket(char* host, char* port)
     }
 
     freeaddrinfo(result);
-
-    
+    if (rp == NULL)
     {
         fprintf(stderr, "Could not connect\n");
         return -1;

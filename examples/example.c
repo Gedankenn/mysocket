@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
     {
         server(argv[2]);
     }
-    else if(strcmp(argv[2], "client") == 0)
+    else if(strcmp(argv[1], "client") == 0)
     {
         client(argv[2], argv[3]);
     }
@@ -67,7 +67,9 @@ void client(char* port, char* ip)
     char data[BUF_SIZE];
     memset(data,0,BUF_SIZE);
 
-    sfd = bind_socket(ip, port);
+    init_socket(BUF_SIZE, AF_INET6, IPV6);
+
+    sfd = connect_socket(ip, port);
     while(1)
     {
         printf("Escreve caraio: ");
