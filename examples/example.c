@@ -38,12 +38,40 @@ void server(char* port)
     int buf[BUF_SIZE];
     int nread = 0;
     int sfd = 0;
+    char data[BUF_SIZE];
+    memset(data,0,BUF_SIZE);
 
+    init_socket(BUF_SIZE, AF_INET6, IPV6);
 
+    sfd = create_socket(port);
 
+    while(1)
+    {
+        nread = socket_read(sfd,buf);
+        memcpy(data,buf,nread);
+        if(strcmp(data,"exit") == 0)
+        {
+            exit(EXIT_SUCCESS);
+        }
+        else
+        {
+            printf("server read: %s\n",data);
+        }
+    }
 }
 
 void client(char* port, char* ip)
 {
+    int nread = 0;
+    int sfd = 0;
+    char data[BUF_SIZE];
+    memset(data,0,BUF_SIZE);
 
+    sfd = bind_socket(ip, port);
+    while(1)
+    {
+        printf("Escreve caraio: ");
+        scanf("%s", data);
+        socket_write(sfd, (int*)data,nread);
+    }
 }

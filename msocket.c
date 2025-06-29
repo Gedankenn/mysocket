@@ -1,4 +1,5 @@
 #include "msocket.h"
+#include <stdlib.h>
 #include <sys/socket.h>
 
 
@@ -13,7 +14,8 @@ void init_socket(int buf, int type, int proto)
     PROTOCOL = proto;
     if((proto == IPV4 && type == AF_INET6) || (proto == IPV6 && type == AF_INET))
     {
-        #warning "Incompatible protocol and family";
+        fprintf(stderr, "Incompatible protocol and family");
+        exit(EXIT_FAILURE);
     }
 }
 
@@ -22,15 +24,12 @@ int create_socket(char* port)
     int                 sfd, s;
     struct addrinfo     hints;
     struct addrinfo     *result, *rp;
-    struct sockaddr_storage peer_addr;
-    socklen_t peer_addrlen = sizeof(peer_addr);
-
 
     memset(&hints, 0, sizeof(hints));
-    hints.ai_family =       FAMILY;  /* Allow IPv4 or IPv6 */
+    hints.ai_family =       AF_UNSPEC;  /* Allow IPv4 or IPv6 */
     hints.ai_socktype =     SOCK_DGRAM; /* Datagram socket */
     hints.ai_flags =        AI_PASSIVE; /* For wildcard IP address */
-    hints.ai_protocol =     PROTOCOL;          /* Any protocol */
+    hints.ai_protocol =     0;          /* Any protocol */
     hints.ai_canonname =    NULL;
     hints.ai_addr =         NULL;
     hints.ai_next =         NULL;
@@ -77,7 +76,6 @@ int bind_socket(char* host, char* port)
     int                 sfd, s;
     struct addrinfo     hints;
     struct addrinfo     *result, *rp;
-    struct sockaddr_storage peer_addr;
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family     = AF_UNSPEC;    // Allow IPv4 or IPv6
@@ -112,7 +110,7 @@ int bind_socket(char* host, char* port)
 
     freeaddrinfo(result);
 
-    if (rp == NULL)
+    
     {
         fprintf(stderr, "Could not connect\n");
         return -1;
