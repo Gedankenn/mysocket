@@ -54,7 +54,7 @@ int create_socket(char* port)
             continue;
         }
 
-        if(connect(sfd, rp->ai_addr, rp->ai_addrlen) != -1)
+        if (bind(sfd, rp->ai_addr, rp->ai_addrlen) == 0)
         {
             break; //Success
         }
@@ -68,6 +68,54 @@ int create_socket(char* port)
     {
         fprintf(stderr, "Could not connect\n");
         exit(1);
+    }
+    return sfd;
+}
+
+int bind_socket(char* host, char* port)
+{
+    int                 sfd, s;
+    struct addrinfo     hints;
+    struct addrinfo     *result, *rp;
+    struct sockaddr_storage peer_addr;
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family     = AF_UNSPEC;    // Allow IPv4 or IPv6
+    hints.ai_socktype   = SOCK_DGRAM;   // Datagram socket
+    hints.ai_flags      = 0;
+    hints.ai_protocol   = 0;            // Any Protocol
+
+    s = getaddrinfo(host, port, &hints, &result);
+    if (s != 0)
+    {
+        fprintf(stderr, "getaddrinfo: %s\n",gai_strerror(s));
+        exit(1);
+    }
+
+    /* getaddinfo() returns a list of address structures.
+    * Try each address until we successfully connect(2). */
+
+    for(rp = result; rp != NULL; rp = rp->ai_next)
+    {
+        sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+        if (sfd == -1)
+        {
+            continue;
+        }
+        if(connect(sfd, rp->ai_addr, rp->ai_addrlen) != -1)
+        {
+            break; //Success
+        }
+
+        close(sfd);
+    }
+
+    freeaddrinfo(result);
+
+    if (rp == NULL)
+    {
+        fprintf(stderr, "Could not connect\n");
+        return -1;
     }
     return sfd;
 }

@@ -45,4 +45,11 @@ void socket_write(int sfd, int* data, int size);
 */ 
 int socket_read(int sfd, int* data);
 
+/**
+* @Brief Connect to a socket 
+* @Params host The host address 
+* @Params port The port to bind to
+*/ 
+int bind_socket(char* host, char* port);
+
 #endif //__msocket_h_
