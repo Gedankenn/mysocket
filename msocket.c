@@ -1,4 +1,5 @@
 #include "msocket.h"
+#include <netdb.h>
 #include <stdlib.h>
 #include <sys/socket.h>
 
@@ -17,6 +18,34 @@ void init_socket(int buf, int type, int proto)
         fprintf(stderr, "Incompatible protocol and family");
         exit(EXIT_FAILURE);
     }
+}
+
+int m_getaddrinfo(char* name, char* service, const struct addrinfo* req, struct addrinfo* result)
+{
+    int s, sfd;
+    struct addrinfo* rp;
+    s = getaddrinfo(name, service, req,  &result);
+    if (s != 0)
+    {
+        printf("getaddrinfo: %s\n",gai_strerror(s));
+        return -1;
+    }
+    for (rp = result; rp != NULL; rp = rp->ai_next)
+    {
+        sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+        if (sfd == -1)
+        {
+            continue;
+        }
+    }
+
+    if (rp != NULL)
+    {
+        printf("could not create socket\n");
+        return -1;
+    }
+    return sfd;
+
 }
 
 int create_socket(char* port)
@@ -117,15 +146,15 @@ int connect_socket(char* host, char* port)
     return sfd;
 }
 
-void socket_write(int sfd, int* data, int size)
+void socket_write(int sfd, void* data, int size)
 {
-    if(write(sfd, data, size) != size)
+    if(write(sfd, (char*)data, size) != size)
     {
         fprintf(stderr, "failed to write data\n");
     }
 }
 
-int socket_read(int sfd, int* data)
+int socket_read(int sfd, void* data)
 {
     char buf[BUF_SIZE];
     int nread = 0;

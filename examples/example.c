@@ -1,5 +1,7 @@
 #include "../msocket.h"
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/socket.h>
 
 #define BUF_SIZE 500
@@ -41,7 +43,7 @@ void server(char* port)
     char data[BUF_SIZE];
     memset(data,0,BUF_SIZE);
 
-    init_socket(BUF_SIZE, AF_INET6, IPV6);
+    init_socket(BUF_SIZE, AF_UNSPEC, 0);
 
     sfd = create_socket(port);
 
@@ -55,25 +57,25 @@ void server(char* port)
         }
         else
         {
-            printf("server read: %s\n",data);
+            printf("server read %d bytes: %s\n",nread,data);
         }
+        memset(data, 0, nread);
     }
 }
 
 void client(char* port, char* ip)
 {
-    int nread = 0;
     int sfd = 0;
     char data[BUF_SIZE];
     memset(data,0,BUF_SIZE);
 
-    init_socket(BUF_SIZE, AF_INET6, IPV6);
+    init_socket(BUF_SIZE, AF_UNSPEC, 0);
 
     sfd = connect_socket(ip, port);
     while(1)
     {
         printf("Escreve caraio: ");
-        scanf("%s", data);
-        socket_write(sfd, (int*)data,nread);
+        fgets(data, BUF_SIZE, stdin);
+        socket_write(sfd, (void*)data,strlen(data)-1);
     }
 }

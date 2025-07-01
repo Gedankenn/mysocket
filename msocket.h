@@ -35,7 +35,7 @@ int create_socket(char* port);
 * @Params *data pointer to the data to write 
 * @Params size size of the data to write 
 */ 
-void socket_write(int sfd, int* data, int size);
+void socket_write(int sfd, void* data, int size);
 
 /**
 * @Brief Read to the file descriptor for the socket 
@@ -43,7 +43,7 @@ void socket_write(int sfd, int* data, int size);
 * @Params *data pointer to the read data
 * @Returns nread number of bytes read or -1 if error  
 */ 
-int socket_read(int sfd, int* data);
+int socket_read(int sfd, void* data);
 
 /**
 * @Brief Connect to a socket 
