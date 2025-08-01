@@ -13,6 +13,8 @@
 #define IPV6 6
 #define IPV4 4
 
+#define BUF 1024
+#define EXIT "exit"
 
 /**
 * @Brief initialize socket
