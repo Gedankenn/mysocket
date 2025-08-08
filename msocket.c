@@ -22,7 +22,7 @@ void init_socket(int buf, int type, int proto)
 
 int m_getaddrinfo(char* name, char* service, const struct addrinfo* req, struct addrinfo* result)
 {
-    int s, sfd;
+    int s, sfd = 0;
     struct addrinfo* rp;
     s = getaddrinfo(name, service, req,  &result);
     if (s != 0)
