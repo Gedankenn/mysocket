@@ -2,6 +2,9 @@
 #include <netdb.h>
 #include <stdlib.h>
 #include <sys/socket.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 
 int BUF_SIZE = 0;
