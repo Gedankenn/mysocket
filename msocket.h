@@ -24,7 +24,7 @@ void init_socket(int buf, int type, int proto);
 /**
 * @Brief Create the socket
 * @Params port The port to create the socket 
-* @Returnn sfd the file descriptor if create or 0 if error
+* @Returns sfd the file descriptor if create or 0 if error
 */
 int create_socket(char* port);
 
@@ -33,8 +33,9 @@ int create_socket(char* port);
 * @Params sfd file descriptor 
 * @Params *data pointer to the data to write 
 * @Params size size of the data to write 
+* @Returns -1 for error or number of bytes sent
 */ 
-void socket_write(int sfd, void* data, int size);
+int socket_write(int sfd, void* data, int size);
 
 /**
 * @Brief Read to the file descriptor for the socket 

@@ -149,12 +149,16 @@ int connect_socket(char* host, char* port)
     return sfd;
 }
 
-void socket_write(int sfd, void* data, int size)
+int socket_write(int sfd, void* data, int size)
 {
-    if(write(sfd, (char*)data, size) != size)
+    int nwrite = 0;
+    nwrite = write(sfd, (char*)data, size);
+    if(nwrite != size)
     {
         fprintf(stderr, "failed to write data\n");
+        return -1;
     }
+    return nwrite;
 }
 
 int socket_read(int sfd, void* data)
