@@ -10,8 +10,11 @@
 #define IPV6 6
 #define IPV4 4
 
-#define BUF 1024
+#define BUF 4096
 #define EXIT "/-!EXIT!-/"
+
+#define SOCKET_SUCCESS 0
+#define SOCKET_ERROR -1
 
 /**
 * @Brief initialize socket

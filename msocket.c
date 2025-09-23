@@ -1,7 +1,9 @@
 #include "msocket.h"
 #include <netdb.h>
+#include <netinet/in.h>
 #include <stdlib.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,139 +25,96 @@ void init_socket(int buf, int type, int proto)
     }
 }
 
-int m_getaddrinfo(char* name, char* service, const struct addrinfo* req, struct addrinfo* result)
-{
-    int s, sfd = 0;
-    struct addrinfo* rp;
-    s = getaddrinfo(name, service, req,  &result);
-    if (s != 0)
-    {
-        printf("getaddrinfo: %s\n",gai_strerror(s));
-        return -1;
-    }
-    for (rp = result; rp != NULL; rp = rp->ai_next)
-    {
-        sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-        if (sfd == -1)
-        {
-            continue;
-        }
-    }
-
-    if (rp != NULL)
-    {
-        printf("could not create socket\n");
-        return -1;
-    }
-    return sfd;
-
-}
-
 int create_socket(char* port)
 {
-    int                 sfd, s;
-    struct addrinfo     hints;
-    struct addrinfo     *result, *rp;
+    int sfd;
+    int cfd;
+    struct sockaddr_in server_addr, client_addr;
+    socklen_t client_len = sizeof(client_addr);
 
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family =       AF_UNSPEC;  /* Allow IPv4 or IPv6 */
-    hints.ai_socktype =     SOCK_DGRAM; /* Datagram socket */
-    hints.ai_flags =        AI_PASSIVE; /* For wildcard IP address */
-    hints.ai_protocol =     0;          /* Any protocol */
-    hints.ai_canonname =    NULL;
-    hints.ai_addr =         NULL;
-    hints.ai_next =         NULL;
-
-    s = getaddrinfo(NULL, port, &hints, &result);
-    if(s != 0)
+    sfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sfd < 0)
     {
-        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
-        exit(1);
+        perror("Failed to create socket\n");
+        return SOCKET_ERROR;
     }
 
-    /* getaddrinfo() returns a list of address structures.
-    * Try each address until we successfully bind(2).
-    * If socket(2) (or bind(2)) fails, we close the socket and try next address. */
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = *port;
+    server_addr.sin_addr.s_addr = inet_addr("0.0.0.0");
 
-    for (rp = result; rp != NULL; rp = rp->ai_next)
+    if (bind(sfd, (struct sockaddr*)&server_addr, sizeof(struct sockaddr_in)) < 0)
     {
-        sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-        if (sfd == -1)
-        {
-            continue;
-        }
-
-        if (bind(sfd, rp->ai_addr, rp->ai_addrlen) == 0)
-        {
-            break; //Success
-        }
+        perror("Failed to bind\n");
         close(sfd);
+        return SOCKET_ERROR;
     }
 
+    printf("Socket successfully created and bound to 0.0.0.0:%s\n",port);
 
-    freeaddrinfo(result);
-
-    if (rp == NULL)
+    if (listen(sfd, 1) < 0)
     {
-        fprintf(stderr, "Could not connect\n");
-        exit(1);
+        perror("Failed to listen to socket\n");
+        return SOCKET_ERROR;
     }
-    return sfd;
+
+    printf("Socket listening...\n");
+
+    cfd = accept(sfd, (struct sockaddr *)&client_addr, &client_len);
+    if (cfd < 0)
+    {
+        perror("Accept failed\n");
+        return SOCKET_ERROR;
+    }
+
+    char client_ip[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &client_addr.sin_addr, client_ip, sizeof(client_ip));
+    printf("Client connected from %s:%d\n", client_ip, ntohs(client_addr.sin_port));
+
+    return cfd;
 }
 
 int connect_socket(char* host, char* port)
 {
-    int                 sfd, s;
-    struct addrinfo     hints;
-    struct addrinfo     *result, *rp;
+    int sfd;
+    struct sockaddr_in server_addr;
 
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family     = AF_UNSPEC;    // Allow IPv4 or IPv6
-    hints.ai_socktype   = SOCK_DGRAM;   // Datagram socket
-    hints.ai_flags      = 0;
-    hints.ai_protocol   = 0;            // Any Protocol
-
-    s = getaddrinfo(host, port, &hints, &result);
-    if (s != 0)
+    sfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sfd < 0)
     {
-        fprintf(stderr, "getaddrinfo: %s\n",gai_strerror(s));
-        exit(1);
+        perror("Failed to create socket\n");
+        return SOCKET_ERROR;
     }
 
-    /* getaddinfo() returns a list of address structures.
-    * Try each address until we successfully connect(2). */
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = *port;
+    server_addr.sin_addr.s_addr = inet_addr(host);
 
-    for(rp = result; rp != NULL; rp = rp->ai_next)
+    if (inet_pton(AF_INET, host, &server_addr.sin_addr) <= 0)
     {
-        sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-        if (sfd == -1)
-        {
-            continue;
-        }
-        if(connect(sfd, rp->ai_addr, rp->ai_addrlen) != -1)
-        {
-            break; //Success
-        }
+        perror("Invalid address\n");
+        return SOCKET_ERROR;
+    }
 
+    if (connect(sfd, (struct sockaddr*)&server_addr, sizeof(struct sockaddr_in)) < 0)
+    {
+        perror("Failed to connect\n");
         close(sfd);
+        return SOCKET_ERROR;
     }
 
-    freeaddrinfo(result);
-    if (rp == NULL)
-    {
-        fprintf(stderr, "Could not connect\n");
-        return -1;
-    }
+    printf("Socket successfully connected to %s:%s\n", host, port);
+
     return sfd;
 }
 
 int socket_write(int sfd, void* data, int size)
 {
     int nwrite = 0;
-    nwrite = write(sfd, (char*)data, size);
+    nwrite = send(sfd, data, size, 0);
     if(nwrite != size)
     {
-        fprintf(stderr, "failed to write data\n");
+        fprintf(stderr, "Failed to write data to socket\n");
         return -1;
     }
     return nwrite;
@@ -165,10 +124,10 @@ int socket_read(int sfd, void* data)
 {
     char buf[BUF_SIZE];
     int nread = 0;
-    nread = read(sfd, buf, BUF_SIZE);
+    nread = recv(sfd, buf, BUF_SIZE, 0);
     if (nread == -1)
     {
-        fprintf(stderr, "what is the fuck\n");
+        fprintf(stderr, "Failed to read data from socket\n");
         return -1;
     }
     memcpy(data, buf, nread);
