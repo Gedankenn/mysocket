@@ -44,9 +44,10 @@ int socket_write(int sfd, void* data, int size);
 * @Brief Read to the file descriptor for the socket 
 * @Params sfd file descriptor 
 * @Params *data pointer to the read data
+* @Params buf_size size of the buffer
 * @Returns nread number of bytes read or -1 if error  
 */ 
-int socket_read(int sfd, void* data);
+int socket_read(int sfd, void* data, int buf_size);
 
 /**
 * @Brief Connect to a socket 

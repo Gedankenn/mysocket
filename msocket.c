@@ -8,23 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-int BUF_SIZE = 0;
-int FAMILY = AF_UNSPEC;
-int PROTOCOL = 0;
-
-void init_socket(int buf, int type, int proto)
-{
-    BUF_SIZE = buf;
-    FAMILY = type;
-    PROTOCOL = proto;
-    if((proto == IPV4 && type == AF_INET6) || (proto == IPV6 && type == AF_INET))
-    {
-        fprintf(stderr, "Incompatible protocol and family");
-        exit(EXIT_FAILURE);
-    }
-}
-
 int create_socket(char* port)
 {
     int sfd;
@@ -120,12 +103,12 @@ int socket_write(int sfd, void* data, int size)
     return nwrite;
 }
 
-int socket_read(int sfd, void* data)
+int socket_read(int sfd, void* data, int buf_size)
 {
-    char buf[BUF_SIZE];
+    char buf[buf_size];
     int nread = 0;
-    nread = recv(sfd, buf, BUF_SIZE, 0);
-    if (nread == -1)
+    nread = recv(sfd, buf, buf_size, 0);
+    if (nread == -1 || nread > buf_size)
     {
         fprintf(stderr, "Failed to read data from socket\n");
         return -1;
