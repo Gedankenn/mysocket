@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <unistd.h>
 
 #define BUF_SIZE 500
 
@@ -75,7 +76,17 @@ void client(char* port, char* ip)
     while(1)
     {
         printf("Escreve caraio: ");
-        fgets(data, BUF_SIZE, stdin);
-        socket_write(sfd, (void*)data,strlen(data)-1);
+        if (fgets(data, BUF_SIZE, stdin) == NULL)
+        {
+            break;
+        }
+        data[strcspn(data, "\n")] = '\0';
+        socket_write(sfd, (void*)data, strlen(data));
+        if (strcmp(data, "exit") == 0)
+        {
+            break;
+        }
     }
+    close(sfd);
+    exit(EXIT_SUCCESS);
 }
