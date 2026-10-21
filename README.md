@@ -102,7 +102,7 @@ Receives up to `buf_size` bytes into `data`. Returns the number of bytes read (0
 
 Constants: `SOCKET_SUCCESS` (0), `SOCKET_ERROR` (-1), `BUF` (4096), `IPV4`/`IPV6` and `EXIT` (`"/-!EXIT!-/"`).
 
-> `init_socket()` is declared in the header but not implemented yet, and IPv6 is not supported yet (the implementation uses `AF_INET`).
+> IPv6 is not supported yet (the implementation uses `AF_INET`).
 
 ---
 
