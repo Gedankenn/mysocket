@@ -5,6 +5,7 @@
 #include <arpa/inet.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 int create_socket(char* port)
 {
@@ -21,7 +22,7 @@ int create_socket(char* port)
     }
 
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = *port;
+    server_addr.sin_port = htons((uint16_t)atoi(port));
     server_addr.sin_addr.s_addr = inet_addr("0.0.0.0");
 
     if (bind(sfd, (struct sockaddr*)&server_addr, sizeof(struct sockaddr_in)) < 0)
@@ -68,7 +69,7 @@ int connect_socket(char* host, char* port)
     }
 
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = *port;
+    server_addr.sin_port = htons((uint16_t)atoi(port));
     server_addr.sin_addr.s_addr = inet_addr(host);
 
     if (inet_pton(AF_INET, host, &server_addr.sin_addr) <= 0)
