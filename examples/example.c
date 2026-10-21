@@ -18,8 +18,6 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    init_socket(BUF_SIZE, AF_UNSPEC, 0);
-
     if(strcmp(argv[1], "server") == 0)
     {
         server(argv[2]);
@@ -43,13 +41,15 @@ void server(char* port)
     char data[BUF_SIZE];
     memset(data,0,BUF_SIZE);
 
-    init_socket(BUF_SIZE, AF_UNSPEC, 0);
-
     sfd = create_socket(port);
 
     while(1)
     {
-        nread = socket_read(sfd,buf);
+        nread = socket_read(sfd, buf, BUF_SIZE - 1);
+        if (nread <= 0)
+        {
+            exit(EXIT_SUCCESS);
+        }
         memcpy(data,buf,nread);
         if(strcmp(data,"exit") == 0)
         {
@@ -68,8 +68,6 @@ void client(char* port, char* ip)
     int sfd = 0;
     char data[BUF_SIZE];
     memset(data,0,BUF_SIZE);
-
-    init_socket(BUF_SIZE, AF_UNSPEC, 0);
 
     sfd = connect_socket(ip, port);
     while(1)
