@@ -1,18 +1,18 @@
 # mysocket
 
-**mysocket** is a minimal C library that wraps the low-level socket API in a clean, reusable interface.  
-It simplifies the creation of client-side network connections using IPv4 or IPv6 with blocking I/O, providing just the essentials to get connected and communicate.
+**mysocket** is a minimal C library that wraps the POSIX socket API for simple blocking TCP connections over IPv4.
+It reduces the boilerplate of socket programming in C down to four calls: listen-and-accept, connect, write and read.
 
-This library was created to reduce the boilerplate of socket programming in C, while keeping everything simple, portable, and hackable.
+This library was created to reduce the boilerplate of socket programming in C, while keeping everything simple and hackable. It is used by my [FileTransfer](https://github.com/Gedankenn/FileTransfer) project.
 
 ---
 
 ## 🔧 Features
 
-- ✅ Lightweight, no dependencies
-- 🌐 IPv4 and IPv6 support
-- 📡 Blocking TCP socket operations
-- 🧼 Clean abstraction with `Socket` struct
+- ✅ Lightweight: one `.c` and one `.h`, no dependencies beyond libc
+- 📡 Blocking TCP (IPv4) sockets
+- 🖥️ Server side: `create_socket()` binds to `0.0.0.0:<port>`, listens and returns the accepted client's file descriptor
+- 🔌 Client side: `connect_socket()` connects to a dotted-quad IPv4 address
 - 🧠 Great for learning or quick prototyping
 
 ---
@@ -21,13 +21,14 @@ This library was created to reduce the boilerplate of socket programming in C, w
 
 ```
 mysocket/
-├── include/
-│   └── mysocket.h        # Public API
-├── src/
-│   └── mysocket.c        # Implementation
-├── main.c                # Example client
-├── Makefile              # Build system
-└── README.md             # This file
+├── msocket.h          # Public API
+├── msocket.c          # Implementation
+├── examples/
+│   ├── example.c      # Interactive server/client using the library
+│   ├── server.c       # Standalone getaddrinfo() UDP echo server, IPv4/IPv6 (does not use the library)
+│   └── client.c       # Matching UDP client (does not use the library)
+├── makefile           # Builds examples/example
+└── README.md
 ```
 
 ---
@@ -39,95 +40,78 @@ mysocket/
 ```bash
 git clone https://github.com/Gedankenn/mysocket.git
 cd mysocket
-make
+make            # builds examples/example from examples/example.c + msocket.c
 ```
 
-This will compile `main.c` and link against your `mysocket` implementation, producing a test client binary.
+### ▶️ Run the example
+
+```bash
+./examples/example server 5555              # terminal 1
+./examples/example client 5555 127.0.0.1    # terminal 2: type lines, the server prints them
+```
 
 ---
 
 ## 🧪 Example Code
 
-Here's a complete example using the `mysocket` API to connect to a server and print the response:
-
 ```c
-#include "mysocket.h"
+#include "msocket.h"
 #include <stdio.h>
 #include <string.h>
 
 int main(void) {
-    Socket s;
+    /* server: blocks until a client connects, returns the client's fd */
+    int cfd = create_socket("5555");
+    if (cfd < 0) return 1;
 
-    if (socket_open(&s, SOCK_STREAM) < 0) {
-        perror("socket_open");
-        return 1;
+    char buf[BUF];
+    int n = socket_read(cfd, buf, sizeof(buf) - 1);
+    if (n > 0) {
+        buf[n] = '\0';
+        printf("got: %s\n", buf);
+        socket_write(cfd, "ok", 2);
     }
-
-    if (socket_connect(&s, "example.com", "80") < 0) {
-        perror("socket_connect");
-        socket_close(&s);
-        return 1;
-    }
-
-    const char *msg = "GET / HTTP/1.0\r\nHost: example.com\r\n\r\n";
-    socket_send(&s, msg, strlen(msg));
-
-    char buffer[1024];
-    ssize_t received = socket_recv(&s, buffer, sizeof(buffer) - 1);
-    if (received > 0) {
-        buffer[received] = '\0';
-        printf("Received:\n%s\n", buffer);
-    }
-
-    socket_close(&s);
+    close(cfd);
     return 0;
 }
 ```
 
 ---
 
-## 📘 API Reference
+## 📘 API Reference (`msocket.h`)
 
 ```c
-int socket_open(Socket *s, int type);
+int create_socket(char *port);
 ```
-Initializes the socket with the given type (e.g., `SOCK_STREAM`).
+Creates a TCP socket, binds it to `0.0.0.0:<port>`, listens and **blocks until one client connects**. Returns the connected client's file descriptor, or `SOCKET_ERROR` (-1).
 
 ```c
-int socket_connect(Socket *s, const char *host, const char *port);
+int connect_socket(char *host, char *port);
 ```
-Connects the socket to the given host and port.
+Connects to `host` (IPv4 address string, e.g. `"192.168.0.10"`) on `port`. Returns the socket file descriptor, or `SOCKET_ERROR`.
 
 ```c
-ssize_t socket_send(Socket *s, const void *buf, size_t len);
+int socket_write(int sfd, void *data, int size);
 ```
-Sends data through the socket.
+Sends `size` bytes. Returns the number of bytes sent, or -1.
 
 ```c
-ssize_t socket_recv(Socket *s, void *buf, size_t len);
+int socket_read(int sfd, void *data, int buf_size);
 ```
-Receives data from the socket.
+Receives up to `buf_size` bytes into `data`. Returns the number of bytes read (0 when the peer closed), or -1.
 
-```c
-void socket_close(Socket *s);
-```
-Closes the socket and cleans up resources.
+Constants: `SOCKET_SUCCESS` (0), `SOCKET_ERROR` (-1), `BUF` (4096), `IPV4`/`IPV6` and `EXIT` (`"/-!EXIT!-/"`).
+
+> `init_socket()` is declared in the header but not implemented yet, and IPv6 is not supported yet (the implementation uses `AF_INET`).
 
 ---
 
 ## 🛠️ Use in Your Project
 
-You can include the library in your own C projects like this:
+Copy (or add as a git submodule) `msocket.c` and `msocket.h`, then compile them with your code:
 
 ```bash
-gcc your_app.c src/mysocket.c -Iinclude -o your_app
-```
-
-Or compile as a static library and link separately:
-
-```bash
-make lib
-# Produces build/libmysocket.a
+gcc your_app.c msocket.c -I. -o your_app
 ```
 
 ---
