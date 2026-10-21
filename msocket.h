@@ -17,14 +17,6 @@
 #define SOCKET_ERROR -1
 
 /**
-* @Brief initialize socket
-* @Params buf buffer size
-* @Params type Family type 
-* @Params proto Protocol 
-*/
-void init_socket(int buf, int type, int proto);
-
-/**
 * @Brief Create the socket
 * @Params port The port to create the socket 
 * @Returns sfd the file descriptor if create or 0 if error
